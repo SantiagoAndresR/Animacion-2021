@@ -13,32 +13,15 @@ public class AnimatorController : MonoBehaviour
         Jump,
         Attack
     }
-    private bool IsWalking()
-    {
-        return Input.GetKey(KeyCode.W) && !Input.GetKey(KeyCode.LeftShift);
-    }
-    private bool IsRunning()
-    {
-        return Input.GetKey(KeyCode.W) && Input.GetKey(KeyCode.LeftShift);
-    }
-    private bool Jumping()
-    {
-        return Input.GetKey(KeyCode.Space);
-    }
-    private bool Attacking()
-    {
-        return Input.GetKey(KeyCode.Mouse0);
-    }
-    private bool Breaking()
-    {
-        return Input.GetKey(KeyCode.E);
-    }
+
     public Animator _CharacterAnimator;
     private PlayerState _currentState;
+
     void Start()
     {
         SetState(PlayerState.Idle);
     }
+
     void Update()
     {
         PlayerState newState = DeterminateState();
@@ -46,41 +29,28 @@ public class AnimatorController : MonoBehaviour
         {
             SetState(newState);
         }
+
+       
+        if (IsWalking() || IsRunning())
+        {
+            RotateCharacter();
+        }
     }
+
     private void SetState(PlayerState newState)
     {
-        switch (_currentState)
+    
+        foreach (PlayerState state in (PlayerState[])System.Enum.GetValues(typeof(PlayerState)))
         {
-            case PlayerState.Idle:
-                _CharacterAnimator.SetBool("Idle", false); break;
-            case PlayerState.IdleBreaker:
-                _CharacterAnimator.SetBool("IdleBreaker", false); break;
-            case PlayerState.Walk:
-                _CharacterAnimator.SetBool("Walk", false); break;
-            case PlayerState.Run:
-                _CharacterAnimator.SetBool("Run", false); break;
-            case PlayerState.Jump:
-                _CharacterAnimator.SetBool("Jump", false); break;
-            case PlayerState.Attack:
-                _CharacterAnimator.SetBool("Attack", false); break;
+            _CharacterAnimator.SetBool(state.ToString(), false);
         }
-        switch (newState)
-        {
-            case PlayerState.Idle:
-                _CharacterAnimator.SetBool("Idle", true); break;
-            case PlayerState.IdleBreaker:
-                _CharacterAnimator.SetBool("IdleBreaker", true); break;
-            case PlayerState.Walk:
-                _CharacterAnimator.SetBool("Walk", true); break;
-            case PlayerState.Run:
-                _CharacterAnimator.SetBool("Run", true); break;
-            case PlayerState.Jump:
-                _CharacterAnimator.SetBool("Jump", true); break;
-            case PlayerState.Attack:
-                _CharacterAnimator.SetBool("Attack", true); break;
-        }
+
+       
+        _CharacterAnimator.SetBool(newState.ToString(), true);
+
         _currentState = newState;
     }
+
     private PlayerState DeterminateState()
     {
         if (Input.GetKeyDown(KeyCode.Y))
@@ -106,6 +76,39 @@ public class AnimatorController : MonoBehaviour
         else
         {
             return PlayerState.Idle;
+        }
+    }
+
+    private bool IsWalking()
+    {
+        return Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.D);
+    }
+
+    private bool IsRunning()
+    {
+        return Input.GetKey(KeyCode.LeftShift) && (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.D));
+    }
+
+    private bool Jumping()
+    {
+        return Input.GetKey(KeyCode.Space);
+    }
+
+    private bool Attacking()
+    {
+        return Input.GetKey(KeyCode.Mouse0);
+    }
+
+    private void RotateCharacter()
+    {
+        Vector3 inputDirection = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical"));
+        if (inputDirection != Vector3.zero)
+        {
+         
+            Quaternion targetRotation = Quaternion.LookRotation(inputDirection);
+
+        
+            _CharacterAnimator.transform.rotation = Quaternion.Slerp(_CharacterAnimator.transform.rotation, targetRotation, Time.deltaTime * 8f);
         }
     }
 }
